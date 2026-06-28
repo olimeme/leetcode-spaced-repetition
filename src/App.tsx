@@ -8,7 +8,7 @@ import AddProblem from './components/AddProblem'
 import ProblemCard from './components/ProblemCard'
 import Help from './components/Help'
 import TopicFilter from './components/TopicFilter'
-import { MoonIcon, SunIcon } from './icons'
+import { KeyboardIcon, MoonIcon, SunIcon } from './icons'
 
 type Theme = 'light' | 'dark'
 const THEME_KEY = 'leetcode-spaced.theme'
@@ -219,16 +219,21 @@ export default function App() {
         </div>
       )}
 
-      <div className="shortcuts" aria-hidden="true">
-        <span>
-          <kbd>⌘/Ctrl</kbd>+<kbd>↵</kbd> add
-        </span>
-        <span>
-          <kbd>⌘/Ctrl</kbd>+<kbd>Z</kbd> undo
-        </span>
-        <span>
-          <kbd>⌘/Ctrl</kbd>+<kbd>⇧</kbd>+<kbd>Z</kbd> redo
-        </span>
+      <div className="shortcuts">
+        <button className="shortcuts-btn" aria-label="Keyboard shortcuts">
+          <KeyboardIcon size={17} />
+        </button>
+        <div className="shortcuts-list" role="tooltip">
+          <span>
+            <kbd>⌘/Ctrl</kbd>+<kbd>↵</kbd> add
+          </span>
+          <span>
+            <kbd>⌘/Ctrl</kbd>+<kbd>Z</kbd> undo
+          </span>
+          <span>
+            <kbd>⌘/Ctrl</kbd>+<kbd>⇧</kbd>+<kbd>Z</kbd> redo
+          </span>
+        </div>
       </div>
     </div>
   )

@@ -661,28 +661,65 @@ body {
   color: var(--accent);
 }
 
-/* ---- Keyboard shortcut legend (fixed corner) ---- */
+/* ---- Keyboard shortcuts (corner button, list on hover) ---- */
 .shortcuts {
   position: fixed;
   right: 14px;
   bottom: 14px;
+  z-index: 11;
+}
+
+.shortcuts-btn {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  color: var(--muted);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.shortcuts-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.shortcuts-list {
+  position: absolute;
+  right: 0;
+  bottom: 46px;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 12px;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-hover);
   color: var(--muted);
   font-size: 11px;
-  opacity: 0.6;
-  pointer-events: none;
-  user-select: none;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: opacity 0.12s, transform 0.12s, visibility 0.12s;
 }
 
-.shortcuts:hover {
-  opacity: 0.95;
+.shortcuts:hover .shortcuts-list,
+.shortcuts:focus-within .shortcuts-list {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 .shortcuts kbd {
-  background: var(--panel);
+  background: var(--panel-2);
   border: 1px solid var(--border-strong);
   border-radius: 5px;
   padding: 1px 5px;
