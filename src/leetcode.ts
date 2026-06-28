@@ -33,11 +33,20 @@ const QUERY = `
   }
 `
 
+export type FetchResult =
+  /** The problem exists; metadata attached. */
+  | { status: 'ok'; meta: LeetCodeMeta }
+  /** LeetCode responded but has no such problem — the link is invalid. */
+  | { status: 'invalid' }
+  /** Couldn't reach or parse LeetCode — existence is unknown. */
+  | { status: 'error' }
+
 /**
- * Fetch problem metadata from LeetCode's GraphQL API through the Vite dev proxy.
- * Returns null if the request fails (caller should fall back to the slug).
+ * Look up a problem on LeetCode via the Vite dev proxy and report whether it
+ * actually exists. A non-existent slug returns `data.question: null`, which we
+ * treat as `invalid`; transport/parse failures are `error` (can't verify).
  */
-export async function fetchMeta(slug: string): Promise<LeetCodeMeta | null> {
+export async function fetchMeta(slug: string): Promise<FetchResult> {
   try {
     const res = await fetch('/lc/graphql', {
       method: 'POST',
@@ -48,17 +57,21 @@ export async function fetchMeta(slug: string): Promise<LeetCodeMeta | null> {
         operationName: 'questionData',
       }),
     })
-    if (!res.ok) return null
+    if (!res.ok) return { status: 'error' }
     const json = await res.json()
-    const q = json?.data?.question
-    if (!q) return null
+    if (json?.errors || !json?.data) return { status: 'error' }
+    const q = json.data.question
+    if (q == null) return { status: 'invalid' }
     return {
-      title: q.title,
-      slug: q.titleSlug,
-      difficulty: q.difficulty as Difficulty,
-      topics: (q.topicTags ?? []).map((t: { name: string }) => t.name),
+      status: 'ok',
+      meta: {
+        title: q.title,
+        slug: q.titleSlug,
+        difficulty: q.difficulty as Difficulty,
+        topics: (q.topicTags ?? []).map((t: { name: string }) => t.name),
+      },
     }
   } catch {
-    return null
+    return { status: 'error' }
   }
 }

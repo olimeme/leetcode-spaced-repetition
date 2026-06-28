@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import type { Problem } from '../types'
 import { exportCSV, exportJSON, parseImportedJSON } from '../io'
+import { DownloadIcon, UploadIcon } from '../icons'
 
 interface Props {
   problems: Problem[]
@@ -27,12 +28,15 @@ export default function Toolbar({ problems, onImport }: Props) {
   return (
     <div className="toolbar">
       <button className="tool" onClick={() => exportJSON(problems)} disabled={!problems.length}>
+        <DownloadIcon />
         Export JSON
       </button>
       <button className="tool" onClick={() => exportCSV(problems)} disabled={!problems.length}>
+        <DownloadIcon />
         Export CSV
       </button>
       <button className="tool" onClick={() => fileRef.current?.click()}>
+        <UploadIcon />
         Import JSON
       </button>
       <input

@@ -8,6 +8,10 @@ import AddProblem from './components/AddProblem'
 import ProblemCard from './components/ProblemCard'
 import Toolbar from './components/Toolbar'
 import TopicFilter from './components/TopicFilter'
+import { MoonIcon, SunIcon } from './icons'
+
+type Theme = 'light' | 'dark'
+const THEME_KEY = 'leetcode-spaced.theme'
 
 const COLUMNS: { key: ColumnKey; title: string; hint: string }[] = [
   { key: 'backlog', title: 'Backlog', hint: 'Problems you want to start' },
@@ -23,10 +27,20 @@ export default function App() {
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set())
   const [dragId, setDragId] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState<ColumnKey | null>(null)
+  const [theme, setTheme] = useState<Theme>(
+    () => (document.documentElement.getAttribute('data-theme') as Theme) || 'light',
+  )
 
   useEffect(() => {
     saveProblems(problems)
   }, [problems])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem(THEME_KEY, theme)
+  }, [theme])
+
+  const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
 
   // Ctrl/Cmd+Z to undo, Ctrl/Cmd+Shift+Z or Ctrl+Y to redo — but not while
   // typing in a field, where these keys should drive native text editing.
@@ -59,6 +73,21 @@ export default function App() {
 
   const removeProblem = (id: string) =>
     setProblems((prev) => prev.filter((p) => p.id !== id))
+
+  // Dev-only time travel: shift every stored date back by `days`, which is
+  // equivalent to advancing the app's clock forward (so cards become due).
+  const skipDays = (days: number) => {
+    const shift = (iso: string | null) =>
+      iso ? new Date(new Date(iso).getTime() - days * 86_400_000).toISOString() : iso
+    setProblems((prev) =>
+      prev.map((p) => ({
+        ...p,
+        dateAdded: shift(p.dateAdded) as string,
+        lastSolved: shift(p.lastSolved),
+        dueDate: shift(p.dueDate),
+      })),
+    )
+  }
 
   /** Merge imported problems by slug — incoming entries win, others are kept. */
   const importProblems = (incoming: Problem[]) =>
@@ -180,6 +209,23 @@ export default function App() {
           </section>
         ))}
       </div>
+
+      <button
+        className="theme-toggle"
+        onClick={toggleTheme}
+        title="Toggle dark / light mode"
+        aria-label="Toggle dark / light mode"
+      >
+        {theme === 'dark' ? <SunIcon size={17} /> : <MoonIcon size={17} />}
+      </button>
+
+      {import.meta.env.DEV && (
+        <div className="devbar">
+          <span className="devbar-label">dev · time travel</span>
+          <button onClick={() => skipDays(1)}>⏩ +1 day</button>
+          <button onClick={() => skipDays(7)}>+7 days</button>
+        </div>
+      )}
 
       <div className="shortcuts" aria-hidden="true">
         <span>

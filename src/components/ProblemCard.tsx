@@ -12,10 +12,13 @@ interface Props {
 
 function fmt(iso: string | null): string {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString(undefined, {
+  const d = new Date(iso)
+  // Keep it short: only show the year when it isn't the current year.
+  const sameYear = d.getFullYear() === new Date().getFullYear()
+  return d.toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',
-    year: 'numeric',
+    ...(sameYear ? {} : { year: 'numeric' }),
   })
 }
 
@@ -52,6 +55,7 @@ export default function ProblemCard({
         <a className="card-title" href={problem.url} target="_blank" rel="noreferrer">
           {problem.title}
         </a>
+        <RevisitBadge problem={problem} />
         <button className="remove" title="Remove" onClick={() => onRemove(problem.id)}>
           ×
         </button>
@@ -72,7 +76,6 @@ export default function ProblemCard({
       <div className="card-meta">
         <span title="First added">added {fmt(problem.dateAdded)}</span>
         <span title="Last solved">solved {fmt(problem.lastSolved)}</span>
-        <RevisitBadge problem={problem} />
       </div>
 
       <div className="grades">
