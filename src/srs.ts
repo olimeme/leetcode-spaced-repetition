@@ -1,6 +1,20 @@
-import type { Grade, Problem } from './types'
+import type { Grade, Period, Problem, SrsSettings } from './types'
 
-const DAY_MS = 24 * 60 * 60 * 1000
+const HOUR_MS = 60 * 60 * 1000
+const DAY_MS = 24 * HOUR_MS
+
+/** Default revisit period for each grade. */
+export const DEFAULT_SETTINGS: SrsSettings = {
+  easy: { value: 7, unit: 'days' },
+  medium: { value: 3, unit: 'days' },
+  hard: { value: 1, unit: 'days' },
+}
+
+/** A period expressed in hours (at least 1). */
+export function periodToHours(p: Period): number {
+  const hours = p.unit === 'days' ? p.value * 24 : p.value
+  return Math.max(1, Math.round(hours))
+}
 
 /** Strip a date to local midnight so day comparisons ignore the clock time. */
 export function startOfDay(d: Date): Date {
@@ -11,17 +25,15 @@ export function todayISO(): string {
   return startOfDay(new Date()).toISOString()
 }
 
-/** Whole calendar days from today until `iso` (negative = overdue). */
-export function daysUntil(iso: string | null): number | null {
+/** Milliseconds from now until `iso` (negative = overdue), or null. */
+export function msUntil(iso: string | null): number | null {
   if (!iso) return null
-  const target = startOfDay(new Date(iso)).getTime()
-  const today = startOfDay(new Date()).getTime()
-  return Math.round((target - today) / DAY_MS)
+  return new Date(iso).getTime() - Date.now()
 }
 
 export function isDue(p: Problem): boolean {
   if (!p.dueDate) return false
-  return startOfDay(new Date(p.dueDate)).getTime() <= startOfDay(new Date()).getTime()
+  return new Date(p.dueDate).getTime() <= Date.now()
 }
 
 export function solvedToday(p: Problem): boolean {
@@ -29,36 +41,32 @@ export function solvedToday(p: Problem): boolean {
   return startOfDay(new Date(p.lastSolved)).getTime() === startOfDay(new Date()).getTime()
 }
 
-/**
- * Simple-multiplier schedule.
- *  - hard   -> reset to 1 day
- *  - medium -> grow gently (×1.5, min 3 days)
- *  - easy   -> grow fast   (×2.5, min 4 days)
- */
-export function nextInterval(prev: number, grade: Grade): number {
-  switch (grade) {
-    case 'hard':
-      return 1
-    case 'medium':
-      return Math.max(3, Math.round((prev || 2) * 1.5))
-    case 'easy':
-      return Math.max(4, Math.round((prev || 2) * 2.5))
-  }
+/** Which board column a problem currently belongs to. */
+export function columnOf(p: Problem): ColumnKey {
+  if (p.lastSolved === null && p.dueDate === null) return 'backlog'
+  // due-first so sub-day intervals can resurface a problem the same day
+  if (isDue(p)) return 'today'
+  // Coming back within a day (hours, not days) belongs in Upcoming, even if it
+  // was solved today — "Solved Today" is for problems parked for a day or more.
+  const ms = p.dueDate ? new Date(p.dueDate).getTime() - Date.now() : Infinity
+  if (ms < DAY_MS) return 'upcoming'
+  if (solvedToday(p)) return 'solved'
+  return 'upcoming'
 }
 
 function addDays(iso: string, days: number): string {
   return new Date(new Date(iso).getTime() + days * DAY_MS).toISOString()
 }
 
-/** Return an updated copy of `p` after grading it today. */
-export function applyGrade(p: Problem, grade: Grade): Problem {
-  const interval = nextInterval(p.intervalDays, grade)
-  const due = new Date(startOfDay(new Date()).getTime() + interval * DAY_MS)
+/** Return an updated copy of `p` after grading it now, using configured periods. */
+export function applyGrade(p: Problem, grade: Grade, settings: SrsSettings): Problem {
+  const hours = periodToHours(settings[grade])
+  const now = Date.now()
   return {
     ...p,
-    lastSolved: todayISO(),
-    intervalDays: interval,
-    dueDate: due.toISOString(),
+    lastSolved: new Date(now).toISOString(),
+    intervalDays: hours / 24, // day-equivalent; used only by drag-to-column
+    dueDate: new Date(now + hours * HOUR_MS).toISOString(),
     solvedCount: p.solvedCount + 1,
   }
 }

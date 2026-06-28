@@ -1,6 +1,17 @@
 export type Difficulty = 'Easy' | 'Medium' | 'Hard'
 export type Grade = 'easy' | 'medium' | 'hard'
 
+export type TimeUnit = 'hours' | 'days'
+
+/** A revisit period, e.g. { value: 7, unit: 'days' }. */
+export interface Period {
+  value: number
+  unit: TimeUnit
+}
+
+/** Time until the next revisit for each grade — user-configurable. */
+export type SrsSettings = Record<Grade, Period>
+
 export interface Problem {
   id: string
   title: string

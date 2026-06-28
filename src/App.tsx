@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Grade, Problem } from './types'
-import { loadProblems, saveProblems } from './storage'
-import { applyGrade, forgetProblem, isDue, moveToColumn, solvedToday } from './srs'
+import type { SrsSettings } from './types'
+import { loadProblems, loadSettings, saveProblems, saveSettings } from './storage'
+import { applyGrade, columnOf, forgetProblem, moveToColumn } from './srs'
 import type { ColumnKey } from './srs'
 import { useHistory } from './useHistory'
 import AddProblem from './components/AddProblem'
 import ProblemCard from './components/ProblemCard'
 import Help from './components/Help'
+import Settings from './components/Settings'
 import TopicFilter from './components/TopicFilter'
 import { KeyboardIcon, MoonIcon, SunIcon } from './icons'
 
@@ -25,6 +27,7 @@ export default function App() {
     loadProblems(),
   )
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set())
+  const [settings, setSettings] = useState<SrsSettings>(() => loadSettings())
   const [dragId, setDragId] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState<ColumnKey | null>(null)
   const [theme, setTheme] = useState<Theme>(
@@ -39,6 +42,10 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem(THEME_KEY, theme)
   }, [theme])
+
+  useEffect(() => {
+    saveSettings(settings)
+  }, [settings])
 
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
 
@@ -66,7 +73,7 @@ export default function App() {
   const addProblem = (p: Problem) => setProblems((prev) => [...prev, p])
 
   const gradeProblem = (id: string, grade: Grade) =>
-    setProblems((prev) => prev.map((p) => (p.id === id ? applyGrade(p, grade) : p)))
+    setProblems((prev) => prev.map((p) => (p.id === id ? applyGrade(p, grade, settings) : p)))
 
   const forgetById = (id: string) =>
     setProblems((prev) => prev.map((p) => (p.id === id ? forgetProblem(p) : p)))
@@ -117,12 +124,7 @@ export default function App() {
       upcoming: [],
       solved: [],
     }
-    for (const p of visible) {
-      if (solvedToday(p)) buckets.solved.push(p)
-      else if (p.lastSolved === null && p.dueDate === null) buckets.backlog.push(p)
-      else if (isDue(p)) buckets.today.push(p)
-      else buckets.upcoming.push(p)
-    }
+    for (const p of visible) buckets[columnOf(p)].push(p)
     // backlog by date added; due/upcoming/solved by next revisit soonest first
     buckets.backlog.sort((a, b) => a.dateAdded.localeCompare(b.dateAdded))
     buckets.today.sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))
@@ -148,7 +150,10 @@ export default function App() {
               Paste links, solve, grade, and let the schedule decide when each problem comes back.
             </p>
           </div>
-          <Help />
+          <div className="header-actions">
+            <Settings settings={settings} onChange={setSettings} />
+            <Help />
+          </div>
         </div>
       </header>
 

@@ -1,5 +1,6 @@
 import type { Grade, Problem } from '../types'
-import { daysUntil, solvedToday } from '../srs'
+import { solvedToday } from '../srs'
+import RevisitBadge, { fmtDate as fmt } from './RevisitBadge'
 
 interface Props {
   problem: Problem
@@ -8,28 +9,6 @@ interface Props {
   onRemove: (id: string) => void
   onDragStart: (id: string) => void
   onDragEnd: () => void
-}
-
-function fmt(iso: string | null): string {
-  if (!iso) return '—'
-  const d = new Date(iso)
-  // Keep it short: only show the year when it isn't the current year.
-  const sameYear = d.getFullYear() === new Date().getFullYear()
-  return d.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    ...(sameYear ? {} : { year: 'numeric' }),
-  })
-}
-
-/** Coloured pill showing days until revisit. */
-function RevisitBadge({ problem }: { problem: Problem }) {
-  const left = daysUntil(problem.dueDate)
-  if (left === null) return <span className="badge badge-new">new</span>
-  if (left < 0) return <span className="badge badge-overdue">{-left}d overdue</span>
-  if (left === 0) return <span className="badge badge-due">due today</span>
-  const tone = left <= 2 ? 'badge-soon' : 'badge-later'
-  return <span className={`badge ${tone}`}>{left}d left</span>
 }
 
 export default function ProblemCard({
