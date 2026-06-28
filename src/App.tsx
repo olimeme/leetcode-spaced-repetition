@@ -3,6 +3,7 @@ import type { Grade, Problem } from './types'
 import { loadProblems, saveProblems } from './storage'
 import { applyGrade, forgetProblem, isDue, moveToColumn, solvedToday } from './srs'
 import type { ColumnKey } from './srs'
+import { useHistory } from './useHistory'
 import AddProblem from './components/AddProblem'
 import ProblemCard from './components/ProblemCard'
 import Toolbar from './components/Toolbar'
@@ -16,7 +17,9 @@ const COLUMNS: { key: ColumnKey; title: string; hint: string }[] = [
 ]
 
 export default function App() {
-  const [problems, setProblems] = useState<Problem[]>(() => loadProblems())
+  const { state: problems, set: setProblems, undo, redo } = useHistory<Problem[]>(
+    loadProblems(),
+  )
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set())
   const [dragId, setDragId] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState<ColumnKey | null>(null)
@@ -24,6 +27,27 @@ export default function App() {
   useEffect(() => {
     saveProblems(problems)
   }, [problems])
+
+  // Ctrl/Cmd+Z to undo, Ctrl/Cmd+Shift+Z or Ctrl+Y to redo — but not while
+  // typing in a field, where these keys should drive native text editing.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const el = e.target as HTMLElement | null
+      const typing =
+        el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
+      if (typing || !(e.ctrlKey || e.metaKey)) return
+      const key = e.key.toLowerCase()
+      if (key === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        undo()
+      } else if ((key === 'z' && e.shiftKey) || key === 'y') {
+        e.preventDefault()
+        redo()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [undo, redo])
 
   const addProblem = (p: Problem) => setProblems((prev) => [...prev, p])
 
@@ -155,6 +179,18 @@ export default function App() {
             </div>
           </section>
         ))}
+      </div>
+
+      <div className="shortcuts" aria-hidden="true">
+        <span>
+          <kbd>⌘/Ctrl</kbd>+<kbd>↵</kbd> add
+        </span>
+        <span>
+          <kbd>⌘/Ctrl</kbd>+<kbd>Z</kbd> undo
+        </span>
+        <span>
+          <kbd>⌘/Ctrl</kbd>+<kbd>⇧</kbd>+<kbd>Z</kbd> redo
+        </span>
       </div>
     </div>
   )

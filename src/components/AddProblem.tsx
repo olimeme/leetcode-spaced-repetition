@@ -93,23 +93,11 @@ export default function AddProblem({ existingSlugs, onAdd }: Props) {
       <button className="add-btn" onClick={submit} disabled={busy || !input.trim()}>
         {busy ? 'Fetching…' : 'Add to backlog'}
       </button>
-      <span className="add-hint">⌘/Ctrl + Enter</span>
       {status && <span className="add-status">{status}</span>}
       {badLines.length > 0 && (
-        <div className="add-error">
-          {badLines.length === 1
-            ? "That isn't a LeetCode problem link:"
-            : `${badLines.length} of these aren't LeetCode problem links:`}
-          <ul>
-            {badLines.map((l, i) => (
-              <li key={i}>{l}</li>
-            ))}
-          </ul>
-          <span className="add-error-tip">
-            Links must look like <code>leetcode.com/problems/&lt;name&gt;</code>. They've been
-            kept above so you can fix them.
-          </span>
-        </div>
+        <span className="add-error">
+          Incorrect link — must be a leetcode.com/problems/… URL
+        </span>
       )}
     </div>
   )
