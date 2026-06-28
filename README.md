@@ -33,12 +33,35 @@ Then open http://localhost:5173.
 
 ## How metadata fetching works
 
-LeetCode's GraphQL endpoint blocks cross-origin browser requests, so `vite.config.ts`
-proxies `/lc/*` to `https://leetcode.com/*` during development. **This proxy only exists
-in `npm run dev`.** A static `npm run build` deployment has no proxy, so auto-fetch falls
-back to a slug-derived title (e.g. `two-sum` → "Two Sum"). A production deploy would need
-its own proxy or serverless function for metadata.
+LeetCode's GraphQL endpoint blocks cross-origin browser requests, so the app never
+calls it directly — the frontend posts to `/api/leetcode` instead, in every
+environment:
+
+- **Development:** `vite.config.ts` proxies `/api/leetcode` to
+  `https://leetcode.com/graphql`.
+- **Production:** the Vercel serverless function in [`api/leetcode.js`](api/leetcode.js)
+  forwards the request with the headers LeetCode expects.
+
+Because the path is the same in both, adding and link-validation behave identically
+locally and when deployed.
+
+## Deploying to Vercel
+
+This repo is configured for zero-config deployment on Vercel:
+
+1. Push to GitHub (already done).
+2. On [vercel.com](https://vercel.com), **Add New → Project** and import the
+   `leetcode-spaced-repetition` repo.
+3. Accept the detected settings (Vite framework, `npm run build`, output `dist`) and
+   deploy. The `api/` folder is picked up automatically as a serverless function.
+
+No environment variables are required. `vercel.json` pins the framework, build command,
+and output directory.
+
+> Note: the serverless function depends on LeetCode's public GraphQL endpoint remaining
+> reachable from Vercel's servers; if LeetCode ever rate-limits or blocks it, metadata
+> fetches (and link validation) will report "couldn't reach LeetCode."
 
 ## Tech
 
-React 18 + Vite + TypeScript.
+React 18 + Vite + TypeScript, deployed on Vercel.

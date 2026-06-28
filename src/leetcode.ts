@@ -42,13 +42,14 @@ export type FetchResult =
   | { status: 'error' }
 
 /**
- * Look up a problem on LeetCode via the Vite dev proxy and report whether it
- * actually exists. A non-existent slug returns `data.question: null`, which we
- * treat as `invalid`; transport/parse failures are `error` (can't verify).
+ * Look up a problem on LeetCode via /api/leetcode (the serverless function in
+ * production, the Vite proxy in dev) and report whether it actually exists. A
+ * non-existent slug returns `data.question: null`, which we treat as `invalid`;
+ * transport/parse failures are `error` (can't verify).
  */
 export async function fetchMeta(slug: string): Promise<FetchResult> {
   try {
-    const res = await fetch('/lc/graphql', {
+    const res = await fetch('/api/leetcode', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
