@@ -62,11 +62,17 @@ body {
   padding: 32px 24px 80px;
 }
 
+.header {
+  /* Keep a consistent gap before the add box whether the toolbar sits beside
+     the title (wide) or wraps onto its own line below it (tablet/narrow). */
+  margin-bottom: 24px;
+}
+
 .header-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px 16px;
   flex-wrap: wrap;
 }
 
@@ -77,50 +83,130 @@ body {
 }
 
 .sub {
-  margin: 0 0 24px;
+  margin: 0;
   color: var(--muted);
   font-size: 14px;
 }
 
-/* ---- Toolbar (import/export) ---- */
-.toolbar {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.tool {
+/* ---- Help button + modal ---- */
+.help-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--panel);
-  color: var(--text);
+  background: none;
+  color: var(--muted);
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: 7px 14px;
+  border-radius: 999px;
+  padding: 6px 12px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.12s, color 0.12s, background 0.12s;
+  transition: color 0.12s, border-color 0.12s;
 }
 
-.tool svg {
-  color: var(--muted);
-}
-
-.tool:hover:not(:disabled) svg {
+.help-btn:hover {
   color: var(--accent);
-}
-
-.tool:hover:not(:disabled) {
   border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-soft);
 }
 
-.tool:disabled {
-  opacity: 0.45;
-  cursor: default;
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+
+.modal {
+  width: 100%;
+  max-width: 560px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-head {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-head h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.modal-close {
+  flex-shrink: 0;
+  display: flex;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 6px;
+  transition: color 0.12s, background 0.12s;
+}
+
+.modal-close:hover {
+  color: var(--text);
+  background: var(--panel-2);
+}
+
+.modal-body {
+  padding: 4px 20px 22px;
+  line-height: 1.55;
+}
+
+.modal-body h3 {
+  margin: 20px 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.modal-body p {
+  margin: 0 0 10px;
+  color: var(--text);
+}
+
+.modal-body ul {
+  margin: 0 0 10px;
+  padding-left: 18px;
+}
+
+.modal-body li {
+  margin-bottom: 5px;
+}
+
+.modal-body kbd {
+  background: var(--panel-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  padding: 1px 5px;
+  font-family: inherit;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.modal-note {
+  margin-top: 16px !important;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  color: var(--muted) !important;
+  font-size: 13px;
 }
 
 /* ---- Add box ---- */
@@ -449,15 +535,18 @@ body {
 /* ---- Grade buttons ---- */
 .grades {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 6px;
-  flex-wrap: wrap;
 }
 
 .grades-label {
   color: var(--muted);
   font-size: 11px;
-  margin-right: 2px;
+}
+
+.grade-buttons {
+  display: flex;
+  gap: 6px;
 }
 
 .g {
@@ -466,7 +555,7 @@ body {
   background: var(--panel);
   color: var(--text);
   border-radius: var(--radius-sm);
-  padding: 6px 0;
+  padding: 6px 8px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;

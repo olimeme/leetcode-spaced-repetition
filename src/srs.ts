@@ -64,12 +64,18 @@ export function applyGrade(p: Problem, grade: Grade): Problem {
 }
 
 /**
- * "I forgot it" — retention reset. The problem becomes due right now and its
- * interval drops to 0 so the next grade starts the schedule over. `lastSolved`
- * is preserved so you keep the history of when you last actually solved it.
+ * "I forgot it" — retention reset. The problem becomes due right now (so it
+ * lands in For Today) and its interval drops to 0 so the next grade starts the
+ * schedule over. If it was solved today we clear that same-day solve, otherwise
+ * the "Solved Today" bucket would keep it there instead of surfacing it.
  */
 export function forgetProblem(p: Problem): Problem {
-  return { ...p, intervalDays: 0, dueDate: todayISO() }
+  return {
+    ...p,
+    intervalDays: 0,
+    dueDate: todayISO(),
+    lastSolved: solvedToday(p) ? null : p.lastSolved,
+  }
 }
 
 export type ColumnKey = 'backlog' | 'today' | 'upcoming' | 'solved'

@@ -80,15 +80,17 @@ export default function ProblemCard({
 
       <div className="grades">
         <span className="grades-label">{done ? 'Re-grade:' : 'How hard?'}</span>
-        <button className="g g-easy" onClick={() => onGrade(problem.id, 'easy')}>
-          Easy
-        </button>
-        <button className="g g-medium" onClick={() => onGrade(problem.id, 'medium')}>
-          Medium
-        </button>
-        <button className="g g-hard" onClick={() => onGrade(problem.id, 'hard')}>
-          Hard
-        </button>
+        <div className="grade-buttons">
+          <button className="g g-easy" onClick={() => onGrade(problem.id, 'easy')}>
+            Easy
+          </button>
+          <button className="g g-medium" onClick={() => onGrade(problem.id, 'medium')}>
+            Medium
+          </button>
+          <button className="g g-hard" onClick={() => onGrade(problem.id, 'hard')}>
+            Hard
+          </button>
+        </div>
       </div>
 
       {everSolved && (

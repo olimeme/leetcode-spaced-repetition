@@ -6,7 +6,7 @@ import type { ColumnKey } from './srs'
 import { useHistory } from './useHistory'
 import AddProblem from './components/AddProblem'
 import ProblemCard from './components/ProblemCard'
-import Toolbar from './components/Toolbar'
+import Help from './components/Help'
 import TopicFilter from './components/TopicFilter'
 import { MoonIcon, SunIcon } from './icons'
 
@@ -89,14 +89,6 @@ export default function App() {
     )
   }
 
-  /** Merge imported problems by slug — incoming entries win, others are kept. */
-  const importProblems = (incoming: Problem[]) =>
-    setProblems((prev) => {
-      const bySlug = new Map(prev.map((p) => [p.slug, p]))
-      for (const p of incoming) bySlug.set(p.slug, p)
-      return [...bySlug.values()]
-    })
-
   const dropOnColumn = (col: ColumnKey) => {
     if (dragId) {
       setProblems((prev) => prev.map((p) => (p.id === dragId ? moveToColumn(p, col) : p)))
@@ -156,7 +148,7 @@ export default function App() {
               Paste links, solve, grade, and let the schedule decide when each problem comes back.
             </p>
           </div>
-          <Toolbar problems={problems} onImport={importProblems} />
+          <Help />
         </div>
       </header>
 
