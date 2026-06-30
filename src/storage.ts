@@ -3,6 +3,7 @@ import { DEFAULT_SETTINGS } from './srs'
 
 const KEY = 'leetcode-spaced.problems.v1'
 const SETTINGS_KEY = 'leetcode-spaced.settings.v1'
+const ACTIVITY_KEY = 'leetcode-spaced.activity.v1'
 
 export function loadProblems(): Problem[] {
   try {
@@ -47,6 +48,22 @@ export function loadSettings(): SrsSettings {
 
 export function saveSettings(settings: SrsSettings): void {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+}
+
+/** Activity log: one local date string ("YYYY-MM-DD") per grade event. */
+export function loadActivity(): string[] {
+  try {
+    const raw = localStorage.getItem(ACTIVITY_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed.filter((d) => typeof d === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+export function saveActivity(activity: string[]): void {
+  localStorage.setItem(ACTIVITY_KEY, JSON.stringify(activity))
 }
 
 export function newId(): string {

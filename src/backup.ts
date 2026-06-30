@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS } from './srs'
 export interface Backup {
   problems: Problem[]
   settings: SrsSettings
+  activity: string[]
 }
 
 function download(filename: string, content: string, mime: string) {
@@ -20,14 +21,19 @@ function stamp(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-/** Download the full app state (problems + settings) as a JSON file. */
-export function exportBackup(problems: Problem[], settings: SrsSettings): void {
+/** Download the full app state (problems + settings + activity) as a JSON file. */
+export function exportBackup(
+  problems: Problem[],
+  settings: SrsSettings,
+  activity: string[],
+): void {
   const payload = {
     app: 'leetcode-spaced',
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     problems,
     settings,
+    activity,
   }
   download(
     `leetcode-spaced-backup-${stamp()}.json`,
@@ -88,5 +94,9 @@ export function parseBackup(text: string): Backup {
     .filter((p) => p && typeof p.slug === 'string' && typeof p.title === 'string')
     .map(normalizeProblem)
   const settings = normalizeSettings(Array.isArray(data) ? undefined : data?.settings)
-  return { problems, settings }
+  const rawActivity = Array.isArray(data) ? undefined : data?.activity
+  const activity = Array.isArray(rawActivity)
+    ? rawActivity.filter((d: unknown) => typeof d === 'string')
+    : []
+  return { problems, settings, activity }
 }

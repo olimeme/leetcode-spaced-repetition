@@ -8,6 +8,7 @@ interface Props {
   settings: SrsSettings
   onChange: (settings: SrsSettings) => void
   problems: Problem[]
+  activity: string[]
   onImport: (backup: Backup) => void
 }
 
@@ -17,7 +18,7 @@ const ROWS: { grade: Grade; label: string; cls: string }[] = [
   { grade: 'hard', label: 'Hard', cls: 'g-hard' },
 ]
 
-export default function Settings({ settings, onChange, problems, onImport }: Props) {
+export default function Settings({ settings, onChange, problems, activity, onImport }: Props) {
   const [open, setOpen] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const onClose = () => setOpen(false)
@@ -123,7 +124,7 @@ export default function Settings({ settings, onChange, problems, onImport }: Pro
                 <div className="settings-backup">
                   <button
                     className="settings-btn"
-                    onClick={() => exportBackup(problems, settings)}
+                    onClick={() => exportBackup(problems, settings, activity)}
                     disabled={problems.length === 0}
                   >
                     <DownloadIcon size={14} />

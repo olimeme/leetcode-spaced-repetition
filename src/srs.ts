@@ -25,6 +25,14 @@ export function todayISO(): string {
   return startOfDay(new Date()).toISOString()
 }
 
+/** Local calendar date as "YYYY-MM-DD" (used to key activity by day). */
+export function localDateStr(d: Date = new Date()): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 /** Milliseconds from now until `iso` (negative = overdue), or null. */
 export function msUntil(iso: string | null): number | null {
   if (!iso) return null

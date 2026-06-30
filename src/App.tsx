@@ -2,14 +2,22 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Grade, Problem } from './types'
 import type { SrsSettings } from './types'
 import type { Backup } from './backup'
-import { loadProblems, loadSettings, saveProblems, saveSettings } from './storage'
-import { applyGrade, columnOf, forgetProblem, moveToColumn } from './srs'
+import {
+  loadActivity,
+  loadProblems,
+  loadSettings,
+  saveActivity,
+  saveProblems,
+  saveSettings,
+} from './storage'
+import { applyGrade, columnOf, forgetProblem, localDateStr, moveToColumn } from './srs'
 import type { ColumnKey } from './srs'
 import { useHistory } from './useHistory'
 import AddProblem from './components/AddProblem'
 import ProblemCard from './components/ProblemCard'
 import Help from './components/Help'
 import Settings from './components/Settings'
+import Activity from './components/Activity'
 import TopicFilter from './components/TopicFilter'
 import { KeyboardIcon, MoonIcon, SunIcon } from './icons'
 
@@ -29,6 +37,14 @@ export default function App() {
   )
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set())
   const [settings, setSettings] = useState<SrsSettings>(() => loadSettings())
+  const [activity, setActivity] = useState<string[]>(() => {
+    const stored = loadActivity()
+    if (stored.length) return stored
+    // first run: backfill from existing last-solved dates so the heatmap isn't empty
+    return loadProblems()
+      .filter((p) => p.lastSolved)
+      .map((p) => localDateStr(new Date(p.lastSolved as string)))
+  })
   const [dragId, setDragId] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState<ColumnKey | null>(null)
   const [theme, setTheme] = useState<Theme>(
@@ -47,6 +63,10 @@ export default function App() {
   useEffect(() => {
     saveSettings(settings)
   }, [settings])
+
+  useEffect(() => {
+    saveActivity(activity)
+  }, [activity])
 
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
 
@@ -73,8 +93,10 @@ export default function App() {
 
   const addProblem = (p: Problem) => setProblems((prev) => [...prev, p])
 
-  const gradeProblem = (id: string, grade: Grade) =>
+  const gradeProblem = (id: string, grade: Grade) => {
     setProblems((prev) => prev.map((p) => (p.id === id ? applyGrade(p, grade, settings) : p)))
+    setActivity((prev) => [...prev, localDateStr()])
+  }
 
   const forgetById = (id: string) =>
     setProblems((prev) => prev.map((p) => (p.id === id ? forgetProblem(p) : p)))
@@ -82,14 +104,15 @@ export default function App() {
   const removeProblem = (id: string) =>
     setProblems((prev) => prev.filter((p) => p.id !== id))
 
-  /** Restore a backup: merge problems by slug (imported wins) and apply settings. */
-  const importBackup = ({ problems: incoming, settings: imported }: Backup) => {
+  /** Restore a backup: merge problems by slug, apply settings, keep activity history. */
+  const importBackup = ({ problems: incoming, settings: imported, activity: log }: Backup) => {
     setProblems((prev) => {
       const bySlug = new Map(prev.map((p) => [p.slug, p]))
       for (const p of incoming) bySlug.set(p.slug, p)
       return [...bySlug.values()]
     })
     setSettings(imported)
+    if (log.length) setActivity((prev) => [...prev, ...log])
   }
 
   // Dev-only time travel: shift every stored date back by `days`, which is
@@ -162,10 +185,12 @@ export default function App() {
             </p>
           </div>
           <div className="header-actions">
+            <Activity activity={activity} />
             <Settings
               settings={settings}
               onChange={setSettings}
               problems={problems}
+              activity={activity}
               onImport={importBackup}
             />
             <Help />
