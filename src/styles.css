@@ -458,6 +458,10 @@ body {
   align-items: center;
   flex-wrap: wrap;
   gap: 7px;
+  margin-bottom: 12px;
+}
+
+.filter:last-of-type {
   margin-bottom: 22px;
 }
 
@@ -465,6 +469,7 @@ body {
   color: var(--muted);
   font-size: 13px;
   margin-right: 2px;
+  min-width: 62px;
 }
 
 .chip {
@@ -486,6 +491,23 @@ body {
   background: var(--accent-soft);
   border-color: transparent;
   color: var(--accent);
+  font-weight: 600;
+}
+
+/* Difficulty filter chips take their difficulty colour when selected */
+.chip-diff-easy.is-on {
+  background: color-mix(in srgb, var(--easy) 16%, transparent);
+  color: var(--easy);
+  font-weight: 600;
+}
+.chip-diff-medium.is-on {
+  background: color-mix(in srgb, var(--medium) 16%, transparent);
+  color: var(--medium);
+  font-weight: 600;
+}
+.chip-diff-hard.is-on {
+  background: color-mix(in srgb, var(--hard) 16%, transparent);
+  color: var(--hard);
   font-weight: 600;
 }
 

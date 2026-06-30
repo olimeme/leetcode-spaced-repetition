@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Grade, Problem } from './types'
-import type { SrsSettings } from './types'
+import type { Difficulty, SrsSettings } from './types'
 import type { Backup } from './backup'
 import {
   loadActivity,
@@ -19,6 +19,7 @@ import Help from './components/Help'
 import Settings from './components/Settings'
 import Activity from './components/Activity'
 import TopicFilter from './components/TopicFilter'
+import DifficultyFilter from './components/DifficultyFilter'
 import { KeyboardIcon, MoonIcon, SunIcon } from './icons'
 
 type Theme = 'light' | 'dark'
@@ -36,6 +37,7 @@ export default function App() {
     loadProblems(),
   )
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set())
+  const [selectedDiffs, setSelectedDiffs] = useState<Set<Difficulty>>(new Set())
   const [settings, setSettings] = useState<SrsSettings>(() => loadSettings())
   const [activity, setActivity] = useState<string[]>(() => {
     const stored = loadActivity()
@@ -147,9 +149,13 @@ export default function App() {
   }, [problems])
 
   const visible = useMemo(() => {
-    if (selectedTopics.size === 0) return problems
-    return problems.filter((p) => p.topics.some((t) => selectedTopics.has(t)))
-  }, [problems, selectedTopics])
+    if (selectedTopics.size === 0 && selectedDiffs.size === 0) return problems
+    return problems.filter((p) => {
+      if (selectedTopics.size && !p.topics.some((t) => selectedTopics.has(t))) return false
+      if (selectedDiffs.size && !(p.difficulty && selectedDiffs.has(p.difficulty))) return false
+      return true
+    })
+  }, [problems, selectedTopics, selectedDiffs])
 
   const columns = useMemo(() => {
     const buckets: Record<ColumnKey, Problem[]> = {
@@ -171,6 +177,13 @@ export default function App() {
     setSelectedTopics((prev) => {
       const next = new Set(prev)
       next.has(t) ? next.delete(t) : next.add(t)
+      return next
+    })
+
+  const toggleDiff = (d: Difficulty) =>
+    setSelectedDiffs((prev) => {
+      const next = new Set(prev)
+      next.has(d) ? next.delete(d) : next.add(d)
       return next
     })
 
@@ -199,6 +212,12 @@ export default function App() {
       </header>
 
       <AddProblem existingSlugs={existingSlugs} onAdd={addProblem} />
+
+      <DifficultyFilter
+        selected={selectedDiffs}
+        onToggle={toggleDiff}
+        onClear={() => setSelectedDiffs(new Set())}
+      />
 
       <TopicFilter
         topics={allTopics}
