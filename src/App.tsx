@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Grade, Problem } from './types'
 import type { SrsSettings } from './types'
+import type { Backup } from './backup'
 import { loadProblems, loadSettings, saveProblems, saveSettings } from './storage'
 import { applyGrade, columnOf, forgetProblem, moveToColumn } from './srs'
 import type { ColumnKey } from './srs'
@@ -81,6 +82,16 @@ export default function App() {
   const removeProblem = (id: string) =>
     setProblems((prev) => prev.filter((p) => p.id !== id))
 
+  /** Restore a backup: merge problems by slug (imported wins) and apply settings. */
+  const importBackup = ({ problems: incoming, settings: imported }: Backup) => {
+    setProblems((prev) => {
+      const bySlug = new Map(prev.map((p) => [p.slug, p]))
+      for (const p of incoming) bySlug.set(p.slug, p)
+      return [...bySlug.values()]
+    })
+    setSettings(imported)
+  }
+
   // Dev-only time travel: shift every stored date back by `days`, which is
   // equivalent to advancing the app's clock forward (so cards become due).
   const skipDays = (days: number) => {
@@ -151,7 +162,12 @@ export default function App() {
             </p>
           </div>
           <div className="header-actions">
-            <Settings settings={settings} onChange={setSettings} />
+            <Settings
+              settings={settings}
+              onChange={setSettings}
+              problems={problems}
+              onImport={importBackup}
+            />
             <Help />
           </div>
         </div>

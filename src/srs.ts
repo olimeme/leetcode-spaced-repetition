@@ -46,10 +46,13 @@ export function columnOf(p: Problem): ColumnKey {
   if (p.lastSolved === null && p.dueDate === null) return 'backlog'
   // due-first so sub-day intervals can resurface a problem the same day
   if (isDue(p)) return 'today'
-  // Coming back within a day (hours, not days) belongs in Upcoming, even if it
-  // was solved today — "Solved Today" is for problems parked for a day or more.
-  const ms = p.dueDate ? new Date(p.dueDate).getTime() - Date.now() : Infinity
-  if (ms < DAY_MS) return 'upcoming'
+  // Coming back later *today* (hours away) belongs in Upcoming, even if it was
+  // solved today — "Solved Today" is for problems parked until another day.
+  if (p.dueDate) {
+    const dueDay = startOfDay(new Date(p.dueDate)).getTime()
+    const today = startOfDay(new Date()).getTime()
+    if (dueDay <= today) return 'upcoming'
+  }
   if (solvedToday(p)) return 'solved'
   return 'upcoming'
 }
@@ -101,7 +104,11 @@ export function moveToColumn(p: Problem, col: ColumnKey): Problem {
       // due now; clear a same-day solve so it doesn't snap back to "Solved Today"
       return { ...p, dueDate: today, lastSolved: solvedToday(p) ? null : p.lastSolved }
     case 'upcoming':
-      return { ...p, dueDate: addDays(today, Math.max(p.intervalDays, 1)) }
+      return {
+        ...p,
+        lastSolved: solvedToday(p) ? null : p.lastSolved,
+        dueDate: addDays(today, Math.max(p.intervalDays, 1)),
+      }
     case 'solved':
       return {
         ...p,

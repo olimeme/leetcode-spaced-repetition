@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react'
-import type { Grade, SrsSettings, TimeUnit } from '../types'
+import { useEffect, useRef, useState } from 'react'
+import type { Grade, Problem, SrsSettings, TimeUnit } from '../types'
 import { DEFAULT_SETTINGS } from '../srs'
-import { CloseIcon, GearIcon } from '../icons'
+import { exportBackup, parseBackup, type Backup } from '../backup'
+import { CloseIcon, DownloadIcon, GearIcon, UploadIcon } from '../icons'
 
 interface Props {
   settings: SrsSettings
   onChange: (settings: SrsSettings) => void
+  problems: Problem[]
+  onImport: (backup: Backup) => void
 }
 
 const ROWS: { grade: Grade; label: string; cls: string }[] = [
@@ -14,8 +17,9 @@ const ROWS: { grade: Grade; label: string; cls: string }[] = [
   { grade: 'hard', label: 'Hard', cls: 'g-hard' },
 ]
 
-export default function Settings({ settings, onChange }: Props) {
+export default function Settings({ settings, onChange, problems, onImport }: Props) {
   const [open, setOpen] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
   const onClose = () => setOpen(false)
 
   useEffect(() => {
@@ -33,6 +37,19 @@ export default function Settings({ settings, onChange }: Props) {
 
   const setUnit = (grade: Grade, unit: TimeUnit) => {
     onChange({ ...settings, [grade]: { ...settings[grade], unit } })
+  }
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const backup = parseBackup(await file.text())
+      onImport(backup)
+    } catch (err) {
+      alert(`Import failed: ${(err as Error).message}`)
+    } finally {
+      e.target.value = '' // allow re-importing the same file
+    }
   }
 
   return (
@@ -96,6 +113,35 @@ export default function Settings({ settings, onChange }: Props) {
               <button className="settings-reset" onClick={() => onChange(DEFAULT_SETTINGS)}>
                 Reset to defaults
               </button>
+
+              <div className="settings-section">
+                <h3>Backup</h3>
+                <p className="settings-hint">
+                  Your data lives only in this browser. Export a file to back it up or move it
+                  to another device; importing merges problems by link.
+                </p>
+                <div className="settings-backup">
+                  <button
+                    className="settings-btn"
+                    onClick={() => exportBackup(problems, settings)}
+                    disabled={problems.length === 0}
+                  >
+                    <DownloadIcon size={14} />
+                    Export backup
+                  </button>
+                  <button className="settings-btn" onClick={() => fileRef.current?.click()}>
+                    <UploadIcon size={14} />
+                    Import backup
+                  </button>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="application/json,.json"
+                    onChange={handleFile}
+                    hidden
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
