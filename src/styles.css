@@ -825,17 +825,17 @@ body {
 
 .hm-months {
   display: flex;
-  gap: 3px;
+  gap: 0; /* labels are 13px wide = one column pitch; no extra gap or they drift */
   margin-bottom: 4px;
 }
 
 .hm-weekday-spacer {
-  width: 30px;
+  width: 33px; /* weekday column (30) + body gap (3) so labels line up with the grid */
   flex-shrink: 0;
 }
 
 .hm-month {
-  width: 13px; /* cell (10) + gap (3) */
+  width: 13px; /* one column = cell (10) + grid gap (3) */
   flex-shrink: 0;
   font-size: 10px;
   color: var(--muted);

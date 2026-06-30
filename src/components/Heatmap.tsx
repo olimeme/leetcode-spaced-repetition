@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { localDateStr } from '../srs'
 
 const WEEKS = 53
@@ -49,9 +49,16 @@ export default function Heatmap({ activity }: { activity: string[] }) {
     return { columns: cols, monthLabels: labels }
   }, [activity])
 
+  // Open scrolled to the most recent activity (right edge), like GitHub.
+  const scrollRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el) el.scrollLeft = el.scrollWidth
+  }, [columns])
+
   return (
     <div className="hm">
-      <div className="hm-scroll">
+      <div className="hm-scroll" ref={scrollRef}>
         <div className="hm-months">
           <div className="hm-weekday-spacer" />
           {monthLabels.map((m, i) => (
