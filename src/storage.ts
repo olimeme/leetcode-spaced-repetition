@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS } from './srs'
 const KEY = 'leetcode-spaced.problems.v1'
 const SETTINGS_KEY = 'leetcode-spaced.settings.v1'
 const ACTIVITY_KEY = 'leetcode-spaced.activity.v1'
+const UPDATED_KEY = 'leetcode-spaced.updatedAt'
 
 export function loadProblems(): Problem[] {
   try {
@@ -64,6 +65,23 @@ export function loadActivity(): string[] {
 
 export function saveActivity(activity: string[]): void {
   localStorage.setItem(ACTIVITY_KEY, JSON.stringify(activity))
+}
+
+/** Timestamp of the last local change, used for last-write-wins sync. */
+export function loadUpdatedAt(): string {
+  try {
+    return localStorage.getItem(UPDATED_KEY) ?? ''
+  } catch {
+    return ''
+  }
+}
+
+export function saveUpdatedAt(iso: string): void {
+  try {
+    localStorage.setItem(UPDATED_KEY, iso)
+  } catch {
+    /* ignore */
+  }
 }
 
 export function newId(): string {

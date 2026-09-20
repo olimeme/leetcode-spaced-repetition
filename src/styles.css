@@ -134,6 +134,148 @@ body {
   border-color: var(--accent);
 }
 
+/* ---- Account / sync ---- */
+.signin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.signin-btn:hover {
+  border-color: var(--accent);
+}
+
+.account {
+  position: relative;
+}
+
+.avatar-btn {
+  display: flex;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.avatar-btn:hover .avatar {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.account-menu {
+  position: absolute;
+  right: 0;
+  top: 40px;
+  z-index: 50;
+  min-width: 220px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-hover);
+  padding: 12px;
+}
+
+.account-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.account-id {
+  min-width: 0;
+}
+
+.account-name {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-email {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.sync-synced .sync-dot {
+  background: var(--easy);
+}
+.sync-syncing .sync-dot {
+  background: var(--medium);
+}
+.sync-error .sync-dot {
+  background: var(--hard);
+}
+
+.account-signout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.account-signout:hover {
+  color: var(--hard);
+  border-color: var(--hard);
+}
+
 /* ---- Settings form ---- */
 .settings-rows {
   display: flex;

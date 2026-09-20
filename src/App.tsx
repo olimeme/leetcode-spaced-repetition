@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { Session } from '@supabase/supabase-js'
 import type { Grade, Problem } from './types'
 import type { Difficulty, SrsSettings } from './types'
 import type { Backup } from './backup'
@@ -6,18 +7,23 @@ import {
   loadActivity,
   loadProblems,
   loadSettings,
+  loadUpdatedAt,
   saveActivity,
   saveProblems,
   saveSettings,
+  saveUpdatedAt,
 } from './storage'
 import { applyGrade, columnOf, forgetProblem, localDateStr, moveToColumn } from './srs'
 import type { ColumnKey } from './srs'
+import { supabase } from './supabase'
+import { fetchBoard, pushBoard, type Board, type SyncStatus } from './sync'
 import { useHistory } from './useHistory'
 import AddProblem from './components/AddProblem'
 import ProblemCard from './components/ProblemCard'
 import Help from './components/Help'
 import Settings from './components/Settings'
 import Activity from './components/Activity'
+import Account from './components/Account'
 import TopicFilter from './components/TopicFilter'
 import DifficultyFilter from './components/DifficultyFilter'
 import { KeyboardIcon, MoonIcon, SunIcon } from './icons'
@@ -52,6 +58,24 @@ export default function App() {
   const [theme, setTheme] = useState<Theme>(
     () => (document.documentElement.getAttribute('data-theme') as Theme) || 'light',
   )
+  const [session, setSession] = useState<Session | null>(null)
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
+
+  // Sync bookkeeping: skip the mount render, don't re-push board data we just
+  // pulled from the server, and only push once the initial pull has finished.
+  const firstChange = useRef(true)
+  const applyingRemote = useRef(false)
+  const syncReady = useRef(false)
+  const pushTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  /** Overwrite local state with a board pulled from the server. */
+  const applyRemoteBoard = (board: Board) => {
+    applyingRemote.current = true
+    setProblems(board.problems)
+    setSettings(board.settings)
+    setActivity(board.activity)
+    saveUpdatedAt(board.updatedAt)
+  }
 
   useEffect(() => {
     saveProblems(problems)
@@ -69,6 +93,106 @@ export default function App() {
   useEffect(() => {
     saveActivity(activity)
   }, [activity])
+
+  // --- Cross-device sync (optional; only when a backend is configured) ---
+
+  // Track the auth session.
+  useEffect(() => {
+    if (!supabase) return
+    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
+    return () => sub.subscription.unsubscribe()
+  }, [])
+
+  // On sign-in, reconcile local vs server (last-write-wins), then allow pushes.
+  useEffect(() => {
+    if (!supabase || !session) {
+      syncReady.current = false
+      return
+    }
+    let cancelled = false
+    setSyncStatus('syncing')
+    ;(async () => {
+      try {
+        const remote = await fetchBoard(session.user.id)
+        if (cancelled) return
+        if (remote && remote.updatedAt > loadUpdatedAt()) {
+          applyRemoteBoard(remote)
+        } else {
+          const updatedAt = loadUpdatedAt() || new Date().toISOString()
+          saveUpdatedAt(updatedAt)
+          await pushBoard(session.user.id, { problems, settings, activity, updatedAt })
+        }
+        if (!cancelled) {
+          syncReady.current = true
+          setSyncStatus('synced')
+        }
+      } catch {
+        if (!cancelled) setSyncStatus('error')
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session])
+
+  // Push local changes (debounced). Skips the mount render and remote-applied ones.
+  useEffect(() => {
+    if (firstChange.current) {
+      firstChange.current = false
+      return
+    }
+    if (applyingRemote.current) {
+      applyingRemote.current = false
+      return
+    }
+    const updatedAt = new Date().toISOString()
+    saveUpdatedAt(updatedAt)
+    if (!supabase || !session || !syncReady.current) return
+    setSyncStatus('syncing')
+    clearTimeout(pushTimer.current)
+    pushTimer.current = setTimeout(async () => {
+      try {
+        await pushBoard(session.user.id, { problems, settings, activity, updatedAt: loadUpdatedAt() })
+        setSyncStatus('synced')
+      } catch {
+        setSyncStatus('error')
+      }
+    }, 1200)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [problems, settings, activity])
+
+  // Pull newer server changes when the tab regains focus (other devices).
+  useEffect(() => {
+    if (!supabase || !session) return
+    const onFocus = async () => {
+      try {
+        const remote = await fetchBoard(session.user.id)
+        if (remote && remote.updatedAt > loadUpdatedAt()) {
+          applyRemoteBoard(remote)
+          setSyncStatus('synced')
+        }
+      } catch {
+        /* ignore transient focus-pull errors */
+      }
+    }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session])
+
+  const signIn = () =>
+    supabase?.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    })
+
+  const signOut = async () => {
+    await supabase?.auth.signOut()
+    syncReady.current = false
+    setSyncStatus('idle')
+  }
 
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
 
@@ -198,6 +322,14 @@ export default function App() {
             </p>
           </div>
           <div className="header-actions">
+            {supabase && (
+              <Account
+                session={session}
+                syncStatus={syncStatus}
+                onSignIn={signIn}
+                onSignOut={signOut}
+              />
+            )}
             <Activity activity={activity} />
             <Settings
               settings={settings}

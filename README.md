@@ -14,13 +14,16 @@ to bring each one back.
   - **For Today** — due for revisit now
   - **Upcoming** — scheduled, not yet due
   - **Solved Today** — graded today, with days until next revisit
-- **Grading** — Easy / Medium / Hard drive a simple-multiplier schedule
-  (Hard → 1 day, Medium → ×1.5 min 3d, Easy → ×2.5 min 4d).
+- **Grading** — Easy / Medium / Hard schedule the next revisit; the period for
+  each grade is configurable (in hours or days) in Settings.
 - **Drag-and-drop** cards between columns.
-- **Topic filter** to focus on specific tags.
+- **Topic and difficulty filters** to focus the board.
 - **"I forgot it"** resets a problem's schedule so it's due again now.
-- **Import / export** as JSON (backup/restore) or CSV.
-- Data is stored locally in the browser (`localStorage`); no backend.
+- **Activity heatmap** (GitHub-style) with streaks, in the Activity view.
+- **Dark / light theme** and **undo/redo** (⌘/Ctrl + Z).
+- **JSON backup/restore** in Settings.
+- Data is stored locally (`localStorage`) and works offline. **Optional
+  cross-device sync** via Google sign-in — see [SETUP.md](SETUP.md).
 
 ## Getting started
 
