@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import type { SyncStatus } from '../sync'
 import { GoogleIcon, LogOutIcon, UserIcon } from '../icons'
@@ -19,7 +19,29 @@ const STATUS_LABEL: Record<SyncStatus, string> = {
 
 export default function Account({ session, syncStatus, onSignIn, onSignOut }: Props) {
   const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
   const ref = useRef<HTMLDivElement>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Position the menu under the avatar, clamped inside the viewport so it can
+  // never run off-screen — whatever side the avatar ends up on (portrait,
+  // landscape, wrapped header, etc.).
+  const place = useCallback(() => {
+    const btn = btnRef.current
+    const menu = menuRef.current
+    if (!btn || !menu) return
+    const b = btn.getBoundingClientRect()
+    const mw = menu.offsetWidth
+    const pad = 8
+    const left = Math.max(pad, Math.min(b.right - mw, window.innerWidth - mw - pad))
+    setPos({ top: b.bottom + 6, left })
+  }, [])
+
+  useLayoutEffect(() => {
+    if (open) place()
+    else setPos(null)
+  }, [open, place])
 
   useEffect(() => {
     if (!open) return
@@ -29,13 +51,18 @@ export default function Account({ session, syncStatus, onSignIn, onSignOut }: Pr
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
+    const onReflow = () => place()
     window.addEventListener('mousedown', onDown)
     window.addEventListener('keydown', onKey)
+    window.addEventListener('resize', onReflow)
+    window.addEventListener('scroll', onReflow, true)
     return () => {
       window.removeEventListener('mousedown', onDown)
       window.removeEventListener('keydown', onKey)
+      window.removeEventListener('resize', onReflow)
+      window.removeEventListener('scroll', onReflow, true)
     }
-  }, [open])
+  }, [open, place])
 
   if (!session) {
     return (
@@ -54,6 +81,7 @@ export default function Account({ session, syncStatus, onSignIn, onSignOut }: Pr
   return (
     <div className="account" ref={ref}>
       <button
+        ref={btnRef}
         className="avatar-btn"
         onClick={() => setOpen((o) => !o)}
         title={name}
@@ -67,7 +95,12 @@ export default function Account({ session, syncStatus, onSignIn, onSignOut }: Pr
       </button>
 
       {open && (
-        <div className="account-menu" role="menu">
+        <div
+          ref={menuRef}
+          className="account-menu"
+          role="menu"
+          style={pos ? { top: pos.top, left: pos.left } : { visibility: 'hidden' }}
+        >
           <div className="account-head">
             {avatar ? (
               <img className="avatar" src={avatar} alt="" referrerPolicy="no-referrer" />

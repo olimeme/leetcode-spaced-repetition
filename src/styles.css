@@ -189,27 +189,18 @@ body {
   box-shadow: 0 0 0 2px var(--accent);
 }
 
+/* Positioned in JS (see Account.tsx) and clamped to the viewport so it stays
+   on screen in any orientation. */
 .account-menu {
-  position: absolute;
-  right: 0;
-  top: 40px;
+  position: fixed;
   z-index: 50;
-  min-width: 220px;
-  max-width: calc(100vw - 32px);
+  width: 240px;
+  max-width: calc(100vw - 16px);
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-hover);
   padding: 12px;
-}
-
-/* On phones the header wraps and the avatar sits at the left, so open the
-   menu toward the right to keep it on screen. */
-@media (max-width: 560px) {
-  .account-menu {
-    right: auto;
-    left: 0;
-  }
 }
 
 .account-head {
